@@ -17,11 +17,16 @@ public protocol MSPlayerDelegate: class {
     func msPlayer(_ player: MSPlayer, isPlaying: Bool)
     func msPlayer(_ player: MSPlayer, orientChanged isFullScreen: Bool)
     func msPlayer(_ player: MSPlayer, definitionIndexDidChange index: Int, definition: MSPlayerResourceDefinition?)
+    
+    func msPlayer(_ player: MSPlayer, loadRecord videoId: Int) // BeaR ++
+    func msPlayer(_ player: MSPlayer, saveRecord videoId: Int, currentTime: TimeInterval) // BeaR ++
 }
 
 public extension MSPlayerDelegate {
     //For optional
     func msPlayer(_ player: MSPlayer, definitionIndexDidChange index: Int, definition: MSPlayerResourceDefinition?) { }
+    func msPlayer(_ player: MSPlayer, loadRecord videoId: Int) {} // BeaR ++
+    func msPlayer(_ player: MSPlayer, saveRecord videoId: Int, currentTime: TimeInterval) {} // BeaR ++
 }
 
 open class MSPlayer: MSGestureView {
@@ -109,11 +114,11 @@ open class MSPlayer: MSGestureView {
     fileprivate var sumTime: TimeInterval = 0
     fileprivate var totalDuration: TimeInterval = 0
     fileprivate var currentPosition: TimeInterval = 0
-    fileprivate var shouldSeekTo: TimeInterval = 0
     fileprivate var isUserSliding = false
     fileprivate var isUserMoveSlider = false
     fileprivate var isPauseByUser = false
     open private(set) var isPlayToTheEnd = false
+    open var shouldSeekTo: TimeInterval = 0  // BeaR ++
     
     /**
      If you want to create MSPlayer with custom control in storyBoard.
@@ -239,18 +244,26 @@ open class MSPlayer: MSGestureView {
         
         // 若使用者有給影片 id，則去coreData看，是否有上次的觀看時間點
         if let videoId = currentDefinition.videoId {
-            let coreDataManager = MSCoreDataManager.shared
-            coreDataManager.loadVideoTimeRecordWith(videoId) { [weak self] (lastWatchTime) in
-                guard let self = self else { return }
-                if let lastWatchTime = lastWatchTime {
-                    self.shouldSeekTo = floor(lastWatchTime)
-                    self.seek(lastWatchTime) {
-                        self.autoPlay()
-                    }
-                } else {
-                    self.autoPlay()
-                }
+            // BeaR ++ Start
+            if let id = Int(videoId) {
+                self.delegate?.msPlayer(self, loadRecord: id)
             }
+            // BeaR ++ End
+            
+            // BeaR -- Start
+//            let coreDataManager = MSCoreDataManager.shared
+//            coreDataManager.loadVideoTimeRecordWith(videoId) { [weak self] (lastWatchTime) in
+//                guard let self = self else { return }
+//                if let lastWatchTime = lastWatchTime {
+//                    self.shouldSeekTo = floor(lastWatchTime)
+//                    self.seek(lastWatchTime) {
+//                        self.autoPlay()
+//                    }
+//                } else {
+//                    self.autoPlay()
+//                }
+//            }
+            // BeaR -- End
         } else {
             self.autoPlay()
         }
@@ -499,7 +512,16 @@ open class MSPlayer: MSGestureView {
         if let videoId = videoId, MSPM.shared().openRecorder {
             let currentTime = floor(totalDuration * Double(progressSliderValue))
             let coreDataManager = MSCoreDataManager.shared
-            coreDataManager.saveVideoTimeRecordWith(videoId, videoTime: currentTime)
+            
+            // BeaR ++ Start
+            if let id = Int(videoId) {
+                self.delegate?.msPlayer(self, saveRecord: id, currentTime: currentTime)
+            }
+            // BeaR ++ End
+            
+            // BeaR -- Start
+//            coreDataManager.saveVideoTimeRecordWith(videoId, videoTime: currentTime)
+            // BeaR -- End
         }
     }
     

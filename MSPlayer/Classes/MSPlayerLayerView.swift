@@ -82,7 +82,7 @@ open class MSPlayerLayerView: UIView {
     // 僅在bufferingSomeSecond裡面使用
     fileprivate var isBuffering = false
     fileprivate var hasReadyToPlay = false
-    fileprivate var shouldSeekTo: TimeInterval = 0
+    open var shouldSeekTo: TimeInterval = 0   // BeaR ++
     
     // MARK: - Actions
     open func setVideoURL(url: URL) {
